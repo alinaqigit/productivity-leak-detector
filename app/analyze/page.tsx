@@ -4,7 +4,17 @@ import React, { useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
-// Icons
+// --- Types representing the API Response Structure ---
+interface AnalysisResult {
+  productivity_score: number;
+  total_wasted_hours: number;
+  money_wasted: number;
+  leaks: { name: string; time_lost: string }[];
+  roast: string;
+  fixes: string[];
+}
+
+// --- Icons ---
 const ChartIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
 );
@@ -21,24 +31,43 @@ const ArrowLeftIcon = () => (
 export default function AnalyzePage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showResult, setShowResult] = useState(false);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState('');
 
-  // Handle Form Submission
-  const handleAnalyze = (e: React.FormEvent) => {
+  // Handle Form Submission with Real API Call
+  const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault(); 
     if (!input) return;
     
     setLoading(true);
-    
-    // Simulating API call
-    setTimeout(() => {
-      setLoading(false);
-      setShowResult(true);
-      // Wait for state update then scroll
+    setError('');
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routine: input }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze. Please try again.');
+      }
+
+      const data = await response.json();
+      setResult(data);
+
+      // Scroll to results after data loads
       setTimeout(() => {
         document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
-    }, 1500);
+
+    } catch (err) {
+      setError('Something went wrong. Please check your connection or try again.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fillExample = () => {
@@ -50,8 +79,8 @@ export default function AnalyzePage() {
       
       {/* Header */}
       <div className="max-w-4xl mx-auto flex justify-between items-center mb-12">
-        <Link href="/dashboard" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition font-medium">
-           <ArrowLeftIcon /> Back to Dashboard
+        <Link href="/" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition font-medium">
+           <ArrowLeftIcon /> Back to Home
         </Link>
         <UserButton afterSignOutUrl="/" />
       </div>
@@ -85,6 +114,10 @@ export default function AnalyzePage() {
                 className="w-full h-48 p-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition resize-none text-slate-700 font-mono text-sm leading-relaxed"
               ></textarea>
 
+              {error && (
+                <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>
+              )}
+
               <div className="mt-6 flex justify-end">
                 <button 
                   type="submit"
@@ -114,8 +147,8 @@ export default function AnalyzePage() {
             
           </div>
 
-          {/* RESULTS PREVIEW SECTION */}
-          {showResult && (
+          {/* RESULTS PREVIEW SECTION (DYNAMIC) */}
+          {result && (
             <div id="results-section" className="bg-slate-50 border-t border-slate-100 p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="flex items-center gap-2 mb-6">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -128,11 +161,23 @@ export default function AnalyzePage() {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                   <h4 className="text-slate-500 font-medium mb-4">Productivity Score</h4>
                   <div className="flex items-end gap-4">
-                    <span className="text-6xl font-black text-slate-900">42<span className="text-2xl text-slate-400">/100</span></span>
-                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold mb-4">CRITICAL</span>
+                    <span className="text-6xl font-black text-slate-900">
+                      {result.productivity_score}
+                      <span className="text-2xl text-slate-400">/100</span>
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold mb-4 ${
+                      result.productivity_score < 50 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {result.productivity_score < 50 ? 'CRITICAL' : 'GOOD'}
+                    </span>
                   </div>
                   <div className="mt-4 h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500 w-[42%] rounded-full"></div>
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                        result.productivity_score < 50 ? 'bg-red-500' : 'bg-green-500'
+                      }`} 
+                      style={{ width: `${result.productivity_score}%` }}
+                    ></div>
                   </div>
                 </div>
 
@@ -140,21 +185,22 @@ export default function AnalyzePage() {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                   <h4 className="text-slate-500 font-medium mb-4">Detected Leaks</h4>
                   <ul className="space-y-3">
-                    <li className="flex items-center gap-3 text-slate-700">
-                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      Context Switching (Slack/Coding)
-                      <span className="ml-auto text-slate-400 text-sm">-45m</span>
-                    </li>
-                    <li className="flex items-center gap-3 text-slate-700">
-                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      Social Media Spiral
-                      <span className="ml-auto text-slate-400 text-sm">-1.5h</span>
-                    </li>
+                    {result.leaks.length > 0 ? (
+                      result.leaks.map((leak, index) => (
+                        <li key={index} className="flex items-center gap-3 text-slate-700">
+                          <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                          {leak.name}
+                          <span className="ml-auto text-slate-400 text-sm">-{leak.time_lost}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-slate-500 italic">No major leaks detected!</li>
+                    )}
                   </ul>
                 </div>
               </div>
 
-              {/* WOW FACTOR SECTION */}
+              {/* WOW FACTOR SECTION (Dynamic Roast) */}
               <div className="mt-8 p-6 bg-indigo-600 rounded-2xl text-white shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
                 <div className="relative z-10">
@@ -163,10 +209,15 @@ export default function AnalyzePage() {
                     <span className="font-bold text-sm uppercase tracking-wide">AI Reality Check</span>
                   </div>
                   <p className="text-xl md:text-2xl font-medium leading-relaxed">
-                    "You lost <span className="font-bold bg-white/20 px-1 rounded">2.4 hours</span> today. At an average rate of $50/hr, you essentially set <span className="font-bold text-yellow-300">$120 on fire</span>. Try batching your Slack checks to 9AM and 1PM tomorrow."
+                    "{result.roast}"
                   </p>
+                  <div className="mt-4 pt-4 border-t border-white/20 flex gap-4 text-sm font-medium opacity-90">
+                    <span>🔥 Wasted Hours: <span className="font-bold">{result.total_wasted_hours}h</span></span>
+                    <span>💸 Money Burned: <span className="font-bold text-yellow-300">${result.money_wasted}</span></span>
+                  </div>
                 </div>
               </div>
+
             </div>
           )}
         </div>
