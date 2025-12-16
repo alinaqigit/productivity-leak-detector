@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
           { "name": string, "time_lost": string } 
         ],
         "roast": string,
-        "fixes": [ string, string, string ]
+        "fixes": [ string, string, string ],
+        "suggestions": [ string, string, string ]
       }
     `;
 

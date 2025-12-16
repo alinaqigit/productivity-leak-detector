@@ -43,8 +43,15 @@ export default function LandingPage() {
             </div>
             
             {/* Desktop Nav Links */}
-            <div className="hidden md:flex space-x-8 text-sm font-medium text-slate-600">
+            <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
               <a href="#how-it-works" className="hover:text-indigo-600 transition">How it Works</a>
+              
+              {/* NEW: Dashboard Link in Navbar (Only visible when signed in) */}
+              <SignedIn>
+                <Link href="/dashboard" className="hover:text-indigo-600 transition text-indigo-600 font-semibold">
+                  Dashboard
+                </Link>
+              </SignedIn>
             </div>
 
             {/* Clerk Authentication Buttons */}
@@ -89,14 +96,27 @@ export default function LandingPage() {
           <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl mx-auto">
             Stop guessing why you're tired but unproductive. Our AI analyzes your unstructured daily routine and reveals hidden productivity leaks in seconds.
           </p>
+          
           <div className="flex flex-col sm:flex-row justify-center gap-4">
+            {/* Primary Button */}
             <Link 
               href="/analyze"
               className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-indigo-500/30 transition transform hover:-translate-y-1"
             >
               Analyze My Productivity
             </Link>
+
+            {/* NEW: Secondary Dashboard Button (Only visible when signed in) */}
+            <SignedIn>
+              <Link 
+                href="/dashboard"
+                className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-lg hover:bg-slate-50 transition shadow-sm"
+              >
+                View Dashboard
+              </Link>
+            </SignedIn>
           </div>
+
         </div>
       </section>
 

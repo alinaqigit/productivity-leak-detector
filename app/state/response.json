@@ -1,0 +1,34 @@
+{
+  "productivity_score": 20,
+  "total_wasted_hours": 2,
+  "money_wasted": 100,
+  "timeline": [
+    {
+      "activity": "Played football",
+      "duration_minutes": 60,
+      "category": "Productive"
+    },
+    {
+      "activity": "Did nothing and wasted time",
+      "duration_minutes": 120,
+      "category": "Wasted"
+    }
+  ],
+  "leaks": [
+    {
+      "name": "Wasted time doing nothing",
+      "time_lost": "2 hours"
+    }
+  ],
+  "roast": "Congrats! You’ve officially mastered the art of doing absolutely nothing. Is your couch your spirit animal?",
+  "fixes": [
+    "Set a timer for breaks instead of 'doing nothing'.",
+    "Plan a structured activity after football to keep the momentum.",
+    "Limit idle time to 15 minutes max to avoid spiraling into a void."
+  ],
+  "suggestions": [
+    "Try a new hobby that keeps you engaged.",
+    "Join a group or class to meet people and stay active.",
+    "Schedule your downtime—yes, even doing nothing can be organized!"
+  ]
+}
